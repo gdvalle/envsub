@@ -9,3 +9,6 @@ panic = "abort"
 
 [dependencies]
 aho-corasick = "*"
+
+[dev-dependencies]
+subprocess = "*"
