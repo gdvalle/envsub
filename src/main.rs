@@ -17,7 +17,7 @@ fn envvar(key: &str) -> Result<String, VarError> {
     env::var(format!("ENVSUB_{}", key))
 }
 
-fn replace(keys: &Vec<String>, values: &Vec<String>, target: &String) -> String {
+fn replace(keys: &[String], values: &[String], target: &str) -> String {
     let aut = AcAutomaton::new(keys);
     let matches = aut.find(&target);
     let mut target_end = 0;
@@ -94,7 +94,7 @@ fn main() {
     let mut buffer = String::new();
     let _ = reader.lock().read_to_string(&mut buffer);
     let replaced = replace(&keys, &vals, &buffer);
-    let _ = writer.lock().write(&replaced.as_bytes());
+    let _ = writer.lock().write(replaced.as_bytes());
 }
 
 #[cfg(test)]
