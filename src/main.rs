@@ -1,5 +1,3 @@
-#![feature(alloc_system)]
-extern crate alloc_system;
 extern crate aho_corasick;
 
 use std::env::{self, VarError};
