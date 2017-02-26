@@ -1,0 +1,11 @@
+[package]
+name = "envsub"
+version = "0.1.0"
+authors = ["Greg Dallavalle <greg.dallavalle@ave81.com>"]
+
+[profile.release]
+lto = true
+panic = "abort"
+
+[dependencies]
+aho-corasick = "*"
