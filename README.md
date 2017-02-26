@@ -1,3 +1,4 @@
+# envsub
 `envsub` is a program for substituting env vars on a stdin->stdout pipe.
 Much like [envsubst][envsubst], but slightly different behavior.
 
@@ -5,6 +6,18 @@ It supports a configurable prefix and suffix for matching env vars, and
 defaults to percent-enclosed keys, i.e. `%VAR%`.  When hitting unset
 variables it will exit rather than expanding as empty strings.  It also
 fully buffers input before writing, so in-place replacement is possible.
+
+[![Linux build status](https://travis-ci.org/gdvalle/envsub.svg?branch=master)](https://travis-ci.org/gdvalle/envsub)
+
+## Why
+I found the combination of unset variable expansion and unconfigurable
+variable expression in `envsubst` prohibitive.  Sometimes files already use
+`$VAR` style variables (ex. nginx) and it's simply more readable to have
+a different prefix/suffix.
+
+Chaining `sed` expressions with `-e` is another, more flexible method. `envsub` just has a
+little less boilerplate to operate.
+
 
 ## Usage
 Given a file, `server.conf.tmpl`:
@@ -39,7 +52,6 @@ server {
 ```
 
 ## Configuration
-
 To configure the match prefix or suffix, env vars are available:
 
 * `ENVSUB_PREFIX=%`
@@ -65,4 +77,3 @@ This is built on the shoulders of [aha-corosick][aha-corosick].
 
 [envsubst]: https://www.gnu.org/software/gettext/manual/html_node/envsubst-Invocation.html
 [aha-corosick]: https://github.com/BurntSushi/aho-corasick
-
