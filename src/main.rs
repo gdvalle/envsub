@@ -63,7 +63,7 @@ fn get_kvs(vars: Vec<String>, prefix: &str, suffix: &str) -> (Vec<String>, Vec<S
             Err(_) => {
                 println_err!("error: env var not found: {}", var);
                 process::exit(1)
-            },
+            }
         };
         keys.push(key);
         vals.push(val);
