@@ -1,20 +1,53 @@
 extern crate subprocess;
 
 use std::env;
+use std::path::PathBuf;
 use subprocess::Exec;
 
 const NAME: &'static str = "envsub";
 
-fn exe(vars: &str) -> Exec {
-    let root = env::current_exe()
+/// Returns the path to the executable.
+#[cfg(not(windows))]
+pub fn cargo_exe(name: &str) -> PathBuf {
+    let root = cargo_root();
+    let path = root.join(name);
+    if !path.is_file() {
+        // Looks like a recent version of Cargo changed the cwd or the
+        // location of the test executable.
+        root.join(format!("../{}", name))
+    } else {
+        path
+    }
+}
+
+/// Returns the path to the executable.
+#[cfg(windows)]
+pub fn cargo_exe(name: &str) -> PathBuf {
+    let root = cargo_root();
+    let path = root.join(format!("{}.exe", name));
+    if !path.is_file() {
+        // Looks like a recent version of Cargo changed the cwd or the
+        // location of the test executable.
+        root.join(format!("../{}.exe", name))
+    } else {
+        path
+    }
+}
+
+pub fn cargo_root() -> PathBuf {
+    env::current_exe()
         .unwrap()
         .parent()
         .expect("failed locating exe dir")
-        .to_path_buf();
-    let exe = root.join(NAME);
+        .to_path_buf()
+}
+
+fn exe(vars: &str) -> Exec {
+    let exe = cargo_exe(NAME);
     let exe_str = exe.to_str().unwrap();
     // Abuse shell method until cmd has env var support.
-    Exec::shell(format!("{} {}", vars, exe_str))
+    let cmd = format!("{} {}", vars, exe_str);
+    Exec::shell(cmd)
 }
 
 #[test]
