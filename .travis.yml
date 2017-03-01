@@ -1,38 +1,89 @@
-sudo: false
+# Based on the "trust" template v0.1.1
+# https://github.com/japaric/trust/tree/v0.1.1
 
-language: generic
+dist: trusty
+language: rust
+services: docker
+sudo: required
 
 env:
   global:
-  - 'PATH=$HOME/.cargo/bin/:$PATH'
+    - CRATE_NAME=envsub
 
 matrix:
   include:
-  - os: linux
-    env: TARGET=x86_64-unknown-linux-musl
-  #- os: osx
-  #  env: TARGET=x86_64-apple-darwin
+    # Linux
+    - env: TARGET=i686-unknown-linux-gnu
+    - env: TARGET=i686-unknown-linux-musl
+    - env: TARGET=x86_64-unknown-linux-gnu
+    - env: TARGET=x86_64-unknown-linux-musl
 
-addons:
-  apt:
-    packages:
-    - upx-ucl
+    # OSX
+    - env: TARGET=i686-apple-darwin
+      os: osx
+    - env: TARGET=x86_64-apple-darwin
+      os: osx
+
+    # *BSD
+    - env: TARGET=i686-unknown-freebsd DISABLE_TESTS=1
+    - env: TARGET=x86_64-unknown-freebsd DISABLE_TESTS=1
+    - env: TARGET=x86_64-unknown-netbsd DISABLE_TESTS=1
+
+    # Other architectures
+    - env: TARGET=aarch64-unknown-linux-gnu
+    - env: TARGET=armv7-unknown-linux-gnueabihf
+    - env: TARGET=mips-unknown-linux-gnu
+    - env: TARGET=mips64-unknown-linux-gnuabi64
+    - env: TARGET=mips64el-unknown-linux-gnuabi64
+    - env: TARGET=mipsel-unknown-linux-gnu
+    - env: TARGET=powerpc-unknown-linux-gnu
+    - env: TARGET=powerpc64-unknown-linux-gnu
+    - env: TARGET=powerpc64le-unknown-linux-gnu
+    - env: TARGET=s390x-unknown-linux-gnu DISABLE_TESTS=1
+
+    # Testing other channels
+    - env: TARGET=x86_64-unknown-linux-gnu
+      rust: nightly
+    - env: TARGET=x86_64-apple-darwin
+      os: osx
+      rust: nightly
+
+before_install: set -e
+
+install:
+  - bash ./ci/install.sh
+  - source ~/.cargo/env || true
 
 script:
-- make bootstrap all
-- cp target/$TARGET/release/envsub envsub-$TRAVIS_TAG-$TARGET
+  - bash ./ci/script.sh
+
+after_script: set +e
 
 before_deploy:
-# This is a hack to fix deploy failures from dpl.
-# Apparently they thought it wasn't worth pinning octokit.
-- rvm 1.9.3 do gem install octokit -v 4.3.0
+  - bash ./ci/before_deploy.sh
 
 deploy:
-  provider: releases
   api_key:
-    secure: imeZd34kwpLJ9lFuUhmydIVqnbf3Ws75doNHMOwBivm+UKuPzEmmgMuWB7j/FUSDI9AaFD1RZjWjvG+bMjlelp6CEArx9vdZPORhjnaSQGbUMsZ1PzFjTOkPeMOa+mweeAeTJkJYZkl8CvnOHwF3wqxiNuTD6m5rzomE6XRsZtBi1LKOz6Ynk/PQ1VoSoXwfa14i12hOYHzZWfET1/7fpm+EcUNjimDF1K44Uhgln7WqiEK32D0rOphkgHYJTaNMEMcm1lT7ModBrw+W83+ydfJfgSTHMz6VT8EXM4ou+9E80oXYAsOS13EOAihp2vxjrsh/h/Acdzzd+QMbJVp7qkI7mDh3M0IMpOMezxqWEFBwXn0SYGwHaRNbHFU0efKjCcqBVKyDRJ09Hu4KBvo/h4Vift0CSQHW4qj0zc5jYu9/nuxWOR8XcbogblJYkBKE+zzzETe8Nv4GdunzPDI30vyerNybcGp4FmMbLYINVYBl4Aslbi8B2MzVuXtqKl6+fGapRZoZWy0kw0aUJWAeU9mP8838L4lwICusd6RiXq2opb8xwpY2fDJkERogxNfyPVjJRDdh9y33RQ8JpCvFKd29cSt7oLb1wmJrNWSBlRXdVCLIRS+1iD4cdEr4LZ/77CPFcOCo2AjFF4p6xf55eFyKCvm3yBWjQmrVJASQXjA=
-  file: envsub-$TRAVIS_TAG-$TARGET
-  skip_cleanup: true
+    secure: FzOd114HkQwSOsTftckdJUUnym1VSIk6QdNYuxR/F89rfZYZYw3lCGNGOGgJ5TmzwJ3hjga5k32jC1Ms96wJdyiR6iEskrspuWZdBxQKi0zL9BbQcDcutBvh0Kj/sQgU4nuot0nrpKUJjnw+a1BEkf4itWM2eEOTupxjMZ5K05MhZoF6sN/vNey1tFdV53lu7cPBmdfj9QzkqYPVqFOjYkeO+/6OXsehHN1VFduYJQS8zk+3VdAhNaTMxOsEgw10p5MWN2O7cGWDC4cQOYBUh/A8lOMmNjegxp8QYD/LamM8v8eouKOaHjf56S5Wp76GxDHWm9AWmBp+TvrNOizQWtWVcilKJ/npDInSsyTUjTDB+P09mpHVr0DW6hTQq8HpSHMuKkWg5V3dMoElDpUDUaA+MVl1YnFNdpS7arxR6m3Pv0De1Il0YOd35EDWvzxz2V8MfdmLfXwT58FCYRqFKdwAdU3TQQ3aYaCs23lx0wPv+DWviUl/QXBxNwkxbiusbn15CR5JFRk8/9+RufHeflAxxiy/X0OKsCel8Cf03yW72FqnUBTIhAqdVYw9Jlh4cG2m4ecJ08brsQ3IQ1/BKOh9A9RbeUCBelssFvrJQ40hWMU6ZMPc7ZFo+0gZSbvfgm/qRoDSb7COg5HcyoXHTCa2rNxJTO52b6U0li93OGM=
+  file_glob: true
+  file: $CRATE_NAME-$TRAVIS_TAG-$TARGET.*
   on:
-    repo: gdvalle/envsub
+    condition: $TRAVIS_RUST_VERSION = stable
     tags: true
+  provider: releases
+  skip_cleanup: true
+
+cache: cargo
+before_cache:
+  # Travis can't cache files that are not readable by "others"
+  - chmod -R a+r $HOME/.cargo
+
+branches:
+  only:
+    # release tags
+    - /^v\d+\.\d+\.\d+.*$/
+    - master
+
+notifications:
+  email:
+    on_success: never

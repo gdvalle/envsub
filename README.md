@@ -8,6 +8,7 @@ variables it will exit rather than expanding as empty strings.  It also
 fully buffers input before writing, so in-place replacement is possible.
 
 [![Linux build status](https://travis-ci.org/gdvalle/envsub.svg?branch=master)](https://travis-ci.org/gdvalle/envsub)
+[![Windows build status](https://ci.appveyor.com/api/projects/status/glvad7l46n6cq8lt/branch/master?svg=true)](https://ci.appveyor.com/project/gdvalle/envsub/branch/master)
 
 ## Why
 I found the combination of unset variable expansion and unconfigurable

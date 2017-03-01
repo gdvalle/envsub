@@ -61,6 +61,7 @@ fn output_without_replacements() {
     assert_eq!(output, expected);
 }
 
+#[cfg(not(windows))]
 #[test]
 fn output_with_one_replacement() {
     let expected = "foo foo baz";
@@ -72,6 +73,7 @@ fn output_with_one_replacement() {
     assert_eq!(output, expected);
 }
 
+#[cfg(not(windows))]
 #[test]
 fn multiple_inputs() {
     /// Test data from kubernetes var expansion proposal doc.
