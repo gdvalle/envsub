@@ -1,6 +1,6 @@
 [package]
 name = "envsub"
-version = "0.0.1"
+version = "0.0.2"
 authors = ["Greg Dallavalle <greg.dallavalle@ave81.com>"]
 
 [profile.release]
