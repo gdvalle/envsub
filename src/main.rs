@@ -1,9 +1,9 @@
 extern crate aho_corasick;
 
+use aho_corasick::AhoCorasick;
 use std::env::{self, VarError};
 use std::io::{self, Read, Write};
 use std::process;
-use aho_corasick::{Automaton, AcAutomaton};
 
 macro_rules! println_err(
     ($($arg:tt)*) => { {
@@ -17,19 +17,18 @@ fn envvar(key: &str) -> Result<String, VarError> {
     env::var(format!("ENVSUB_{}", key))
 }
 
-fn replace(keys: &[String], values: &[String], target: &str) -> String {
-    let aut = AcAutomaton::new(keys);
-    let matches = aut.find(&target);
+fn replace(patterns: &[String], replacements: &[String], text: &str) -> String {
+    let ac = AhoCorasick::new(patterns);
     let mut target_end = 0;
     let mut o: Vec<String> = vec![];
 
-    for m in matches {
-        o.push(target[target_end..m.start].into());
-        o.push(values[m.pati].as_str().into());
-        target_end = m.end;
+    for m in ac.find_iter(&text) {
+        o.push(text[target_end..m.start()].into());
+        o.push(replacements[m.pattern()].as_str().into());
+        target_end = m.end();
     }
 
-    o.push(target[target_end..].into());
+    o.push(text[target_end..].into());
     o.join("")
 }
 
@@ -51,24 +50,22 @@ fn get_vars() -> Vec<String> {
     vars
 }
 
-fn get_kvs(vars: Vec<String>, prefix: &str, suffix: &str) -> (Vec<String>, Vec<String>) {
-    // Build two vecs, one for search patterns, one for replacement text.
-    let mut keys = Vec::new();
-    let mut vals = Vec::new();
+fn get_patterns(vars: Vec<String>, prefix: &str, suffix: &str) -> (Vec<String>, Vec<String>) {
+    let mut patterns = Vec::new();
+    let mut replacements = Vec::new();
     for (i, var) in vars.iter().enumerate() {
-        // Form the search key.
-        let key = format!("{}{}{}", &prefix, &var, &suffix);
-        let val = match env::var(&vars[i]) {
+        let pattern = format!("{}{}{}", &prefix, &var, &suffix);
+        let replacement = match env::var(&vars[i]) {
             Ok(v) => v,
             Err(_) => {
                 println_err!("error: env var not found: {}", var);
                 process::exit(1)
             }
         };
-        keys.push(key);
-        vals.push(val);
+        patterns.push(pattern);
+        replacements.push(replacement);
     }
-    (keys, vals)
+    (patterns, replacements)
 }
 
 fn main() {
@@ -81,10 +78,8 @@ fn main() {
         Err(_) => String::from("%"),
     };
 
-    // Gather list of env vars.
     let vars = get_vars();
-    // Build search keys and values.
-    let (keys, vals) = get_kvs(vars, &prefix, &suffix);
+    let (patterns, replacements) = get_patterns(vars, &prefix, &suffix);
 
     let reader = io::stdin();
     let writer = io::stdout();
@@ -92,9 +87,15 @@ fn main() {
     // Build an in-memory buffer so users can replace files in-place.
     // i.e. envsub < foo.txt > foo.txt
     let mut buffer = String::new();
-    let _ = reader.lock().read_to_string(&mut buffer);
-    let replaced = replace(&keys, &vals, &buffer);
-    let _ = writer.lock().write(replaced.as_bytes());
+    reader
+        .lock()
+        .read_to_string(&mut buffer)
+        .expect("Failed reading stdin");
+    let replaced = replace(&patterns, &replacements, &buffer);
+    writer
+        .lock()
+        .write(replaced.as_bytes())
+        .expect("Failed writing to stdout");
 }
 
 #[cfg(test)]
@@ -123,7 +124,11 @@ mod tests {
     #[test]
     fn test_replace_with_multiple_variables() {
         let string = "%VAR1%, %VAR2%, %VAR3%".to_owned();
-        let keys = vec!["%VAR1%".to_owned(), "%VAR2%".to_owned(), "%VAR3%".to_owned()];
+        let keys = vec![
+            "%VAR1%".to_owned(),
+            "%VAR2%".to_owned(),
+            "%VAR3%".to_owned(),
+        ];
         let vals = vec!["foo".to_owned(), "bar".to_owned(), "baz".to_owned()];
         let output = replace(&keys, &vals, &string);
         assert_eq!(output, vals.join(", "));
@@ -132,7 +137,11 @@ mod tests {
     #[test]
     fn test_replace_with_single_variable_multiple_times() {
         let string = "%VAR1%, %VAR1%, %VAR1%".to_owned();
-        let keys = vec!["%VAR1%".to_owned(), "%VAR2%".to_owned(), "%VAR3%".to_owned()];
+        let keys = vec![
+            "%VAR1%".to_owned(),
+            "%VAR2%".to_owned(),
+            "%VAR3%".to_owned(),
+        ];
         let vals = vec!["foo".to_owned(), "bar".to_owned(), "baz".to_owned()];
         let output = replace(&keys, &vals, &string);
         assert_eq!(output, "foo, foo, foo".to_owned());
@@ -141,7 +150,11 @@ mod tests {
     #[test]
     fn test_multiline_replacement() {
         let string = "%VAR3%\n%VAR1\n".to_owned();
-        let keys = vec!["%VAR1%".to_owned(), "%VAR2%".to_owned(), "%VAR3%".to_owned()];
+        let keys = vec![
+            "%VAR1%".to_owned(),
+            "%VAR2%".to_owned(),
+            "%VAR3%".to_owned(),
+        ];
         let vals = vec!["foo".to_owned(), "bar".to_owned(), "baz".to_owned()];
         let output = replace(&keys, &vals, &string);
         assert_eq!(output, "baz\n%VAR1\n".to_owned());

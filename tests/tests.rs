@@ -76,35 +76,37 @@ fn output_with_one_replacement() {
 #[cfg(not(windows))]
 #[test]
 fn multiple_inputs() {
-    /// Test data from kubernetes var expansion proposal doc.
+    // Test data from kubernetes var expansion proposal doc.
     let cmd_prefix = "ENVSUB_PREFIX='$(' ENVSUB_SUFFIX=')' VAR_A=A VAR_B=B VAR_C=C VAR_EMPTY=''";
     println!("{}", cmd_prefix);
-    let table = vec![("$(VAR_A)", "A"),
-                     ("___$(VAR_B)___", "___B___"),
-                     ("___$(VAR_C)", "___C"),
-                     ("$(VAR_A)-$(VAR_A)", "A-A"),
-                     ("$(VAR_A)-1", "A-1"),
-                     ("$(VAR_A)_$(VAR_B)_$(VAR_C)", "A_B_C"),
-                     ("foo\\$(VAR_C)bar", "foo\\Cbar"),
-                     ("foo\\\\$(VAR_C)bar", "foo\\\\Cbar"),
-                     ("foo\\\\\\\\$(VAR_A)bar", "foo\\\\\\\\Abar"),
-                     ("foo$(VAR_EMPTY)bar", "foobar"),
-                     ("foo$(VAR_Awhoops!", "foo$(VAR_Awhoops!"),
-                     ("f00__(VAR_A)__", "f00__(VAR_A)__"),
-                     ("$?_boo_$!", "$?_boo_$!"),
-                     ("$VAR_A", "$VAR_A"),
-                     ("$(VAR_DNE)", "$(VAR_DNE)"),
-                     ("$$$$$$(BIG_MONEY)", "$$$$$$(BIG_MONEY)"),
-                     ("$VAR_A)", "$VAR_A)"),
-                     ("${VAR_A}", "${VAR_A}"),
-                     ("$(VAR_B)_______$(A", "B_______$(A"),
-                     ("$(VAR_C)_______$(", "C_______$("),
-                     ("$(VAR_A)foobarzab$", "Afoobarzab$"),
-                     ("foo-\\$(VAR_A", "foo-\\$(VAR_A"),
-                     ("--$($($($($--", "--$($($($($--"),
-                     ("$($($($($--foo$(", "$($($($($--foo$("),
-                     ("foo0--$($($($(", "foo0--$($($($("),
-                     ("$(foo$$var)", "$(foo$$var)")];
+    let table = vec![
+        ("$(VAR_A)", "A"),
+        ("___$(VAR_B)___", "___B___"),
+        ("___$(VAR_C)", "___C"),
+        ("$(VAR_A)-$(VAR_A)", "A-A"),
+        ("$(VAR_A)-1", "A-1"),
+        ("$(VAR_A)_$(VAR_B)_$(VAR_C)", "A_B_C"),
+        ("foo\\$(VAR_C)bar", "foo\\Cbar"),
+        ("foo\\\\$(VAR_C)bar", "foo\\\\Cbar"),
+        ("foo\\\\\\\\$(VAR_A)bar", "foo\\\\\\\\Abar"),
+        ("foo$(VAR_EMPTY)bar", "foobar"),
+        ("foo$(VAR_Awhoops!", "foo$(VAR_Awhoops!"),
+        ("f00__(VAR_A)__", "f00__(VAR_A)__"),
+        ("$?_boo_$!", "$?_boo_$!"),
+        ("$VAR_A", "$VAR_A"),
+        ("$(VAR_DNE)", "$(VAR_DNE)"),
+        ("$$$$$$(BIG_MONEY)", "$$$$$$(BIG_MONEY)"),
+        ("$VAR_A)", "$VAR_A)"),
+        ("${VAR_A}", "${VAR_A}"),
+        ("$(VAR_B)_______$(A", "B_______$(A"),
+        ("$(VAR_C)_______$(", "C_______$("),
+        ("$(VAR_A)foobarzab$", "Afoobarzab$"),
+        ("foo-\\$(VAR_A", "foo-\\$(VAR_A"),
+        ("--$($($($($--", "--$($($($($--"),
+        ("$($($($($--foo$(", "$($($($($--foo$("),
+        ("foo0--$($($($(", "foo0--$($($($("),
+        ("$(foo$$var)", "$(foo$$var)"),
+    ];
     for (input, expected_output) in table {
         let output = exe(cmd_prefix)
             .stdin(input)
