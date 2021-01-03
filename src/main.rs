@@ -1,3 +1,5 @@
+#![warn(clippy::all)]
+
 extern crate aho_corasick;
 
 use aho_corasick::AhoCorasick;
@@ -94,7 +96,7 @@ fn main() {
     let replaced = replace(&patterns, &replacements, &buffer);
     writer
         .lock()
-        .write(replaced.as_bytes())
+        .write_all(replaced.as_bytes())
         .expect("Failed writing to stdout");
 }
 
@@ -104,7 +106,7 @@ mod tests {
 
     #[test]
     fn test_replace_without_replacements() {
-        let string = String::from("just\na\nnormal\nstring\n");
+        let string = "just\na\nnormal\nstring\n".to_owned();
         let keys = vec!["x".to_owned()];
         let vals = vec!["xyz".to_owned()];
         let output = replace(&keys, &vals, &string);
@@ -118,7 +120,7 @@ mod tests {
         let keys = vec!["%VAR%".to_owned()];
         let vals = vec![replacement.clone()];
         let output = replace(&keys, &vals, &string);
-        assert_eq!(output, replacement.clone());
+        assert_eq!(output, replacement);
     }
 
     #[test]

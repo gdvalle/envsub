@@ -48,19 +48,21 @@ matrix:
       os: osx
       rust: nightly
 
-before_install: set -e
+before_install:
+  - set -e
+  - rustup self update
 
 install:
-  - bash ./ci/install.sh
+  - bash ci/install.sh
   - source ~/.cargo/env || true
 
 script:
-  - bash ./ci/script.sh
+  - bash ci/script.sh
 
 after_script: set +e
 
 before_deploy:
-  - bash ./ci/before_deploy.sh
+  - bash ci/before_deploy.sh
 
 deploy:
   api_key:
